@@ -1,1 +1,4 @@
 __pycache__
+dist
+pypi_steps.txt
+finsec.egg-info
