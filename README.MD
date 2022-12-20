@@ -18,7 +18,7 @@
 <a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/pypi/dm/finsec.svg?maxAge=2592000&label=installs&color=%2327B1FF" alt="PyPi downloads"></a>
 <a target="new" href="https://github.com/git-shogg/finsec"><img border=0 src="https://img.shields.io/github/stars/git-shogg/finsec.svg?style=social&label=Star&maxAge=60" alt="Star this repo"></a>
 <!-- <a target="new" href="https://github.com/git-shogg/finsec/actions/workflows/ci/badge.svg"><img border=0 src="https://img.shields.io/badge/git-shogg/finsec/main.svg?maxAge=1" alt="Build status"></a> -->
-
+[![Python package](https://github.com/git-shogg/finsec/actions/workflows/ci.yml/badge.svg)](https://github.com/git-shogg/finsec/actions/workflows/ci.yml)
 <!-- ## Blogs
 Check out these blog posts for detailed tutorials with code examples:
 </br >- [Medium 1]().</br >
