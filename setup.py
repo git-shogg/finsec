@@ -10,8 +10,7 @@ with open("finsec/version.py") as f:
 
 # Long Description (i.e. README file)
 here = path.abspath(path.dirname(__file__))
-# here = path.join(path.dirname(__file__))
-with io.open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with io.open(path.join(here, 'README.MD'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Setup

@@ -28,3 +28,7 @@ class Filing(FilingBase):
     def latest_13f_filing_cover_page(self):
         return self.get_latest_13f_filing_cover_page()
     
+    @property
+    def filings_to_excel(self):
+        return super().filings_to_excel()
+    

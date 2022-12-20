@@ -1,4 +1,8 @@
 __pycache__
+.pytest_cache
 dist
 pypi_steps.txt
 finsec.egg-info
+venv
+main.py
+*.xlsx

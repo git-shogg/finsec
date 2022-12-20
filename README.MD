@@ -2,29 +2,31 @@
 
 ## Download historical filing data directly from the United States (U.S.) Securities Exchange Commission (SEC).
 
-<br>
-If you like the product [buy me a coffee]() ☕!
-</br>
+<table border=1 cellpadding=10><tr><td>
 
+#### <ins>**IMPORTANT LEGAL DISCLAIMER**</ins>
 -----
-### ***Important Legal Disclaimer***
-
-finsec is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs, and is intended for research and educational purposes.
+**finsec** is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs, and is intended for research and educational purposes.
 
 **You should refer to SEC Edgar's website for more details ([here](https://www.sec.gov/os/accessing-edgar-data))**
 
------
+</td></tr></table>
 
-## Blogs
+<a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/badge/python-3.7+-blue.svg?style=flat" alt="Python version"></a>
+<a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/pypi/v/finsec.svg?maxAge=60%" alt="PyPi version"></a>
+<a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/pypi/status/finsec.svg?maxAge=60" alt="PyPi status"></a>
+<a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/pypi/dm/finsec.svg?maxAge=2592000&label=installs&color=%2327B1FF" alt="PyPi downloads"></a>
+<a target="new" href="https://github.com/git-shogg/finsec"><img border=0 src="https://img.shields.io/github/stars/git-shogg/finsec.svg?style=social&label=Star&maxAge=60" alt="Star this repo"></a>
+<!-- <a target="new" href="https://github.com/git-shogg/finsec/actions/workflows/ci/badge.svg"><img border=0 src="https://img.shields.io/badge/git-shogg/finsec/main.svg?maxAge=1" alt="Build status"></a> -->
+
+<!-- ## Blogs
 Check out these blog posts for detailed tutorials with code examples:
 </br >- [Medium 1]().</br >
 </br >- [Medium 2]().</br >
-</br >- [Medium 3]().</br >
+</br >- [Medium 3]().</br > -->
 
 ## Quickstart
-### Find 13F Filing Data (for Berkshire Hathaway CIK 0001067983)
-
-Find the holdings of Berkshire Hathaway listed in their latest 13F filing.
+### Review 13F filings for Berkshire Hathaway CIK **0001067983**
 
 ```python
 import finsec
@@ -40,7 +42,7 @@ filing.latest_13f_filing
 |  1 | ALLY FINL INC           | COM              | 02005N100 | SH                        |       834901000 |                          30000000 |
 |  2 | AMAZON COM INC          | COM              | 023135106 | SH                        |      1205258000 |                          10666000 |
 
-Using the `latest_13f_filing` function will return the the simplified (consolidated) version of the 13F Information Table, this works well for for most use-cases. However, there are some who may want to have the detailed breakdown of the filing. Such as, which investment manager was responsible for investing in the security and the voting authority type granted. The following can be run to get the detailed breakdown of the 13F Information Table if required.
+*Note*: Using the `latest_13f_filing` function will return the the latest "simplified" version of the 13F Information Table, this works well in most instances... However, there are some who may want to have a more detailed breakdown of the filing. Such as, which investment manager was responsible for investing in the security and the voting authority type granted. This can be handled with the function `latest_13f_filing_detailed` (below).
 
 ```python
 # Return the latest detailed 13F reported holdings for Berkshire Hathaway.
@@ -56,46 +58,48 @@ filing.latest_13f_filing_detailed
 ```python
 # Return the latest 13F cover page details for Berkshire Hathaway.
 filing.latest_13f_filing_cover_page
-```
-**Output:**
-```python
+
+#Output
 {'filing_manager': 'Berkshire Hathaway Inc', 'business_address': '3555 Farnam Street, Omaha, NE, 68131', 'submission_type': '13F-HR', 'period_of_report': '09-30-2022', 'signature_name': 'Marc D. Hamburg', 'signature_title': 'Senior Vice President', 'signature_phone': '402-346-1400', 'signature_city': 'Omaha', 'signature_state': 'NE', 'signature_date': '11-14-2022', 'portfolio_value': 296096640000, 'count_holdings': 179}
+
+# Return a specific 13F filing for the specified cik.
+filing.get_a_13f_filing("Q2-2022")
+
+# Return the json object containing all 13F filings that are stored as part of the filing object (note this includes everything we've searched for so far).
+filing.filings
+
+# Write filings to excel. Record everything we've looked at to Excel. 
+filing.filings_to_excel
 ```
-
-
-
-
-
 
 # Installation
-## Requirements
-##
+Install `finsec` using `pip`:
+``` {.sourceCode .bash}
+$ pip install finsec
+```
 
+# Requirements
+-   [Python](https://www.python.org) \>=  3.7+
+-   [Pandas](https://github.com/pydata/pandas) \>= 1.3.5
+-   [lxml](https://pypi.org/project/lxml) \>= 4.8.0
+-   [requests](http://docs.python-requests.org/en/master) \>= 2.27.1
+-   [beautifulsoup4](https://pypi.org/project/beautifulsoup4) \>= 4.11.1
 
-## Taxonomy
-The [XBRL GAAP Financial Reporting Taxonomy](https://fasb.org/Page/PageContent?PageId=/xbrl/2022financial.html#:~:text=The%202022%20GAAP%20Financial%20Reporting%20Taxonomy%20) is kept up to date by the Financial Accounting Standards Board (FASB) and is used by issuers filing with the U.S. SEC. This taxonomy is levered heavily by finsec to ensure all filing details are captured in strict accordance with SEC rules. 
-
-
-
-
-
+*Note* that the above packages will be downloaded automatically using `pip`.
 
 # Author
 **Stephen Hogg**
 
 
+<!-- ## Taxonomy
+The [XBRL GAAP Financial Reporting Taxonomy](https://fasb.org/Page/PageContent?PageId=/xbrl/2022financial.html#:~:text=The%202022%20GAAP%20Financial%20Reporting%20Taxonomy%20) is kept up to date by the Financial Accounting Standards Board (FASB) and is used by issuers filing with the U.S. SEC. This taxonomy is levered heavily by finsec to ensure all filing details are captured in strict accordance with SEC rules.  -->
 
-Explaining the 13F Information Table:
+<!-- Explaining the 13F Information Table:
 
 The 13F rule set is outlined herewithin:
 https://www.sec.gov/pdf/form13f.pdf
 
 Name of issuer
-
-
-
-
-
 
 
 holdings_table
@@ -104,7 +108,7 @@ simplified_holdings_table
 This table simplifies the holding table if required. This is particularly useful for businesses that have many different investment managers (e.g. Berkshire Hathaway - where they have 14 separate managers shown below)
 
 ![13F_Managers](assets/13F_Managers.PNG)
-
+ -->
 
 
 

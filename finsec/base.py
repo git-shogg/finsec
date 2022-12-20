@@ -107,8 +107,6 @@ class FilingBase():
 
         portfolio_value = int(self._get_bs4_text(primary_doc.find("summaryPage").find("tableValueTotal"))) * 1000
         count_holdings = int(self._get_bs4_text(primary_doc.find("summaryPage").find("tableEntryTotal")))
-        
-        
 
         filing_cover_page = {
             "filing_manager":filing_manager, 
@@ -152,11 +150,20 @@ class FilingBase():
 
         return filing_cover_page, holdings_table, simplified_holdings_table
 
+    def filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+        table_type = "Simplified Holdings Table" if simplified == True else "Holdings Table"
+        if len(self.filings)>0:
+            with pd.ExcelWriter('{}.xlsx'.format(self.cik)) as writer: 
+                for qtr_year in self.filings:
+                    if inc_cover_page_tabs == True:
+                        pd.DataFrame.from_dict(self.filings['Q3-2022']['Cover Page'],orient='index').to_excel(writer,sheet_name="{}_cover_pg".format(qtr_year))
+                    pd.read_json(self.filings[qtr_year][table_type]).to_excel(writer,sheet_name="{}_holdings".format(qtr_year))
+        return        
+
     def get_latest_13f_filing(self, simplified=True):
         """Returns the latest 13F-HR filing."""
         self._get_13f_filings()
         latest_url_date = self._last_100_13f_filings_url[0]
-        
         if (len(self.latest_holdings_table)>0) & (len(self.latest_simplified_holdings_table)>0):
             if simplified==True:
                 return self.latest_simplified_holdings_table
