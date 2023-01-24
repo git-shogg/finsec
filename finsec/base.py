@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import datetime
 import pandas as pd
 import pdb
+import os
 
 _BASE_URL_ = 'https://www.sec.gov'
 _13F_SEARCH_URL_ = 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={}&type=13F-HR&count=100'
@@ -16,14 +17,7 @@ class FilingBase():
     def __init__(self, cik):
         
         self.cik = self._validate_cik(cik)
-
-        self.latest_13f_cover_page = None
-
-        self.latest_13f_value = None  # !!!
-        self.latest_13f_num_holdings = None   # !!!
-
-        self.latest_holdings_table = pd.DataFrame()
-        self.latest_simplified_holdings_table = pd.DataFrame()
+        self.manager = None
         self._last_100_13f_filings_url = None
         
         self.filings = {}
@@ -34,7 +28,7 @@ class FilingBase():
             raise Exception("""Invalid CIK Provided""")
         return cik
 
-    def _get_13f_filings(self):
+    def _get_last_100_13f_filings_url(self):
         """Returns list of last 100 13F-HR filings."""
         if self._last_100_13f_filings_url:
             return
@@ -148,78 +142,118 @@ class FilingBase():
         holdings_table_dropped_na = holdings_table[simplified_columns].dropna(axis=1)
         simplified_holdings_table = holdings_table_dropped_na.groupby(holdings_table_dropped_na.columns[:-2].to_list(), sort=False,as_index=False).sum()
 
+        if self.manager == None:
+            self.manager = filing_cover_page.get('filing_manager')
+
         return filing_cover_page, holdings_table, simplified_holdings_table
 
-    def filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+    def convert_filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+        """Outputs existing 'self.filings' dictionary to excel. Note that this will overwrite any existing files that may be present."""
         table_type = "Simplified Holdings Table" if simplified == True else "Holdings Table"
         if len(self.filings)>0:
+            if os.path.exists('{}.xlsx'.format(self.cik)):
+                os.remove('{}.xlsx'.format(self.cik))
             with pd.ExcelWriter('{}.xlsx'.format(self.cik)) as writer: 
                 for qtr_year in self.filings:
                     if inc_cover_page_tabs == True:
-                        pd.DataFrame.from_dict(self.filings['Q3-2022']['Cover Page'],orient='index').to_excel(writer,sheet_name="{}_cover_pg".format(qtr_year))
+                        pd.DataFrame.from_dict(self.filings[qtr_year]['Cover Page'],orient='index').to_excel(writer,sheet_name="{}_cover_pg".format(qtr_year))
                     pd.read_json(self.filings[qtr_year][table_type]).to_excel(writer,sheet_name="{}_holdings".format(qtr_year))
         return        
 
     def get_latest_13f_filing(self, simplified=True):
         """Returns the latest 13F-HR filing."""
-        self._get_13f_filings()
-        latest_url_date = self._last_100_13f_filings_url[0]
-        if (len(self.latest_holdings_table)>0) & (len(self.latest_simplified_holdings_table)>0):
-            if simplified==True:
-                return self.latest_simplified_holdings_table
-            else:
-                return self.latest_holdings_table
+        self._get_last_100_13f_filings_url()
 
-        self.latest_13f_cover_page, self.latest_holdings_table, self.latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
-        self.latest_13f_value = self.latest_13f_cover_page['portfolio_value']
-        self.latest_13f_num_holdings = self.latest_13f_cover_page['count_holdings']
+        latest_url_date = self._last_100_13f_filings_url[0]
+
+        # if (len(self.latest_holdings_table)>0) & (len(self.latest_simplified_holdings_table)>0):
+        #     if simplified==True:
+        #         return self.latest_simplified_holdings_table
+        #     else:
+        #         return self.latest_holdings_table
+
+        latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
+        # self.latest_13f_cover_page, self.latest_holdings_table, self.latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
+        # self.latest_13f_value = self.latest_13f_cover_page['portfolio_value']
+        # self.latest_13f_num_holdings = self.latest_13f_cover_page['count_holdings']
 
         qtr_year_str = self._recent_qtr_year()
-        self.filings.update({qtr_year_str:{"Cover Page":self.latest_13f_cover_page, "Holdings Table":self.latest_holdings_table.to_json(), "Simplified Holdings Table":self.latest_simplified_holdings_table.to_json()}})
+        self.filings.update({
+                        qtr_year_str:{
+                            "Cover Page":latest_13f_cover_page, 
+                            "Period of Report":latest_13f_cover_page['period_of_report'],
+                            "Holdings Table":latest_holdings_table.to_json(), 
+                            "Simplified Holdings Table":latest_simplified_holdings_table.to_json(), 
+                            "Fund Value":latest_13f_cover_page['portfolio_value'], 
+                            "Holdings Count":latest_13f_cover_page['count_holdings'],
+                            "Simplified Holdings Count":len(latest_simplified_holdings_table),
+                            "Latest 13F":True
+                            }})
         
         if simplified==True: 
-            return self.latest_simplified_holdings_table
+            return latest_simplified_holdings_table
         else: 
-            return self.latest_holdings_table
+            return latest_holdings_table
         
     def get_latest_13f_filing_cover_page(self):
         """Returns the latest 13F-HR filing cover page."""
-        if self.latest_13f_cover_page != None:
-            return self.latest_13f_cover_page
+        latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+        if len(latest_qtr_year) >0:
+            return self.filings[latest_qtr_year[0]]['Cover Page']
         else:
             self.get_latest_13f_filing()
+            latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+            return self.filings[latest_qtr_year[0]]['Cover Page']
 
     def get_latest_13f_value(self):
-        """Returns the latest 13F-HR value of holdings"""
-        if self.latest_13f_value != None:
-            return self.latest_13f_value
+        """Returns the latest 13F-HR value of fund value"""
+        latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+        if len(latest_qtr_year) >0:
+            return self.filings[latest_qtr_year[0]]['Fund Value']
         else:
             self.get_latest_13f_filing()
+            latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+            return self.filings[latest_qtr_year[0]]['Fund Value']
 
-    def get_latest_13f_num_holdings(self):
+    def get_latest_13f_num_holdings(self, holdings_type='Simplified Holdings Count'):
         """Returns the latest 13F-HR number of holdings"""
-        if self.latest_13f_num_holdings != None:
-            return self.latest_13f_num_holdings
+        latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+        if len(latest_qtr_year) >0:
+            return self.filings[latest_qtr_year[0]][holdings_type]
         else:
             self.get_latest_13f_filing()
+            latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
+            return self.filings[latest_qtr_year[0]][holdings_type]
 
     def get_13f_filing(self, qtr_year: str):
         """Returns the requested 13F-HR filing."""
-        self._get_13f_filings()
+        self._get_last_100_13f_filings_url()
         if len(self.filings) != 0:
             if qtr_year in self.filings:
                 return self.filings[qtr_year]["Cover Page"], pd.read_json(self.filings[qtr_year]["Holdings Table"]), pd.read_json(self.filings[qtr_year]["Simplified Holdings Table"])
 
-        for filing in self._last_100_13f_filings_url:
+        latest_13_f_filing = False
+        for index, filing in enumerate(self._last_100_13f_filings_url):
             datetime_obj = datetime.strptime(filing[1], '%Y-%m-%d')
             quarter_dict = {1:4, 2:1, 3:2, 4:3} # Every statement released is for the previous quarter.
             release_qtr = quarter_dict[(datetime_obj.month - 1)//3 + 1]
             year = datetime_obj.year
             if "Q{}-{}".format(release_qtr, year) == qtr_year:
                 filing_url_date = filing
+                if index == 0:
+                    latest_13_f_filing = True
         
         cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0])
-        self.filings.update({qtr_year:{"Cover Page":cover_page, "Holdings Table":holdings_table.to_json(), "Simplified Holdings Table":simplified_holdings_table.to_json()}})
+        self.filings.update({
+                        qtr_year:{
+                            "Cover Page":cover_page, 
+                            "Period of Report":cover_page['period_of_report'],
+                            "Holdings Table":holdings_table.to_json(), 
+                            "Simplified Holdings Table":simplified_holdings_table.to_json(), 
+                            "Fund Value":cover_page['portfolio_value'], 
+                            "Holdings Count":cover_page['count_holdings'],
+                            "Simplified Holdings Count":len(simplified_holdings_table),
+                            "Latest 13F":latest_13_f_filing}})
 
         return cover_page, holdings_table, simplified_holdings_table
 

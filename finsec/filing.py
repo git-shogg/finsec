@@ -8,6 +8,9 @@ class Filing(FilingBase):
     def get_a_13f_filing(self, qtr_year):
         return self.get_13f_filing(qtr_year)
 
+    def filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+        return self.convert_filings_to_excel(simplified, inc_cover_page_tabs)
+
     @property
     def latest_13f_filing(self):
         return self.get_latest_13f_filing()
@@ -28,7 +31,5 @@ class Filing(FilingBase):
     def latest_13f_filing_cover_page(self):
         return self.get_latest_13f_filing_cover_page()
     
-    @property
-    def filings_to_excel(self):
-        return super().filings_to_excel()
+    
     
