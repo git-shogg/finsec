@@ -166,16 +166,7 @@ class FilingBase():
 
         latest_url_date = self._last_100_13f_filings_url[0]
 
-        # if (len(self.latest_holdings_table)>0) & (len(self.latest_simplified_holdings_table)>0):
-        #     if simplified==True:
-        #         return self.latest_simplified_holdings_table
-        #     else:
-        #         return self.latest_holdings_table
-
         latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
-        # self.latest_13f_cover_page, self.latest_holdings_table, self.latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
-        # self.latest_13f_value = self.latest_13f_cover_page['portfolio_value']
-        # self.latest_13f_num_holdings = self.latest_13f_cover_page['count_holdings']
 
         qtr_year_str = self._recent_qtr_year()
         self.filings.update({
