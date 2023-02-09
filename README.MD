@@ -2,6 +2,8 @@
 
 ## Download historical filing data directly from the United States (U.S.) Securities Exchange Commission (SEC).
 
+![finsec_logo](assets/finsec_logo.png)
+
 <table border=1 cellpadding=10><tr><td>
 
 #### <ins>**IMPORTANT LEGAL DISCLAIMER**</ins>

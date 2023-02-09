@@ -65,8 +65,8 @@ class FilingBase():
         except:
             return "N/A"
 
-    def _recent_qtr_year(self):
-        datetime_obj = datetime.today()
+    def _recent_qtr_year(self, datetime_o):
+        datetime_obj = datetime.strptime(datetime_o, '%Y-%m-%d')
         quarter_dict = {1:4, 2:1, 3:2, 4:3} # Every statement released is for the previous quarter.
         release_qtr = quarter_dict[(datetime_obj.month - 1)//3 + 1]
         year = datetime_obj.year
@@ -121,15 +121,15 @@ class FilingBase():
         list_of_holdings = list_doc.findAll("infoTable")
         result = []
         for each_holding in list_of_holdings:
-            name_of_issuer = each_holding.find("nameOfIssuer").text
-            title_of_class = each_holding.find("titleOfClass").text
-            cusip = each_holding.find("cusip").text
+            name_of_issuer = self._get_bs4_text(each_holding.find("nameOfIssuer"))
+            title_of_class = self._get_bs4_text(each_holding.find("titleOfClass"))
+            cusip = self._get_bs4_text(each_holding.find("cusip"))
             holding_value = int(each_holding.find("value").text) * 1000
-            share_or_principal_amount = each_holding.find("shrsOrPrnAmt").find("sshPrnamtType").text
+            share_or_principal_amount = self._get_bs4_text(each_holding.find("shrsOrPrnAmt").find("sshPrnamtType"))
             share_or_principal_amount_count = int(each_holding.find("shrsOrPrnAmt").find("sshPrnamt").text)
             # put_or_call = each_holding.find("SOMETHING").text
-            investment_discretion = each_holding.find("investmentDiscretion").text
-            other_manager = each_holding.find("otherManager").text
+            investment_discretion = self._get_bs4_text(each_holding.find("investmentDiscretion"))
+            other_manager = self._get_bs4_text(each_holding.find("otherManager"))
             voting_authority_share_or_principal_amount_count_sole = int(each_holding.find("votingAuthority").find("Sole").text)
             voting_authority_share_or_principal_amount_count_shared = int(each_holding.find("votingAuthority").find("Shared").text)
             voting_authority_share_or_principal_amount_count_none = int(each_holding.find("votingAuthority").find("None").text)
@@ -168,7 +168,7 @@ class FilingBase():
 
         latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
 
-        qtr_year_str = self._recent_qtr_year()
+        qtr_year_str = self._recent_qtr_year(latest_url_date[1])
         self.filings.update({
                         qtr_year_str:{
                             "Cover Page":latest_13f_cover_page, 
@@ -222,7 +222,7 @@ class FilingBase():
         if len(self.filings) != 0:
             if qtr_year in self.filings:
                 return self.filings[qtr_year]["Cover Page"], pd.read_json(self.filings[qtr_year]["Holdings Table"]), pd.read_json(self.filings[qtr_year]["Simplified Holdings Table"])
-
+        filing_url_date = None
         latest_13_f_filing = False
         for index, filing in enumerate(self._last_100_13f_filings_url):
             datetime_obj = datetime.strptime(filing[1], '%Y-%m-%d')
@@ -233,7 +233,9 @@ class FilingBase():
                 filing_url_date = filing
                 if index == 0:
                     latest_13_f_filing = True
-        
+        if filing_url_date == None:
+            raise Exception("No filing could be found for the period {}".format(qtr_year))
+
         cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0])
         self.filings.update({
                         qtr_year:{
