@@ -72,19 +72,35 @@ class FilingBase():
         year = datetime_obj.year
         return "Q{}-{}".format(release_qtr, year)
 
-    def _parse_13f_url(self, url):
+    def _parse_13f_url(self, url, date):
         response = requests.get(_BASE_URL_+url, headers=_REQ_HEADERS_)
         soup = bs(response.text, "html.parser")
         import re
-
-        url_primary_document = soup.find_all('a', attrs = {'href': re.compile('xml')})[1]['href'] # Primary doc is always 2nd in the list.
+        url_primary_html_document = soup.find_all('a', attrs = {'href': re.compile('xml')})[0]['href']  # Html primary doc is 1st int the list, this contains the detail on whether the dollars listed are nearest dollar or thousand dollar.
+        url_primary_document = soup.find_all('a', attrs = {'href': re.compile('xml')})[1]['href'] # XML Primary doc is always 2nd in the list.
         url_list_document = soup.find_all('a', attrs = {'href': re.compile('xml')})[3]['href'] # xml list is always 4th in the list.
+
+        response = requests.get(_BASE_URL_+url_primary_html_document, headers=_REQ_HEADERS_)
+        primary_html_doc = bs(response.text, "xml")
 
         response = requests.get(_BASE_URL_+url_primary_document, headers=_REQ_HEADERS_)
         primary_doc = bs(response.text, "xml")
 
         response = requests.get(_BASE_URL_ + url_list_document, headers=_REQ_HEADERS_)
         list_doc = bs(response.text, "xml")
+
+        # Check if the documentation is to the nearest dollar or thousand dollars. This new reporting rule came into effect in 2023 (reference: https://www.sec.gov/info/edgar/specifications/form13fxmltechspec)
+        datetime_obj = datetime.strptime(date, '%Y-%m-%d')
+        if datetime_obj.year < 2023:
+            dollar_value_multiplier = 1000
+        elif datetime_obj.year > 2023:
+            dollar_value_multiplier = 1
+        else:
+            temp_list = primary_html_doc.findAll(text=re.compile('nearest dollar'))
+            if len(temp_list)>0:
+                dollar_value_multiplier = 1
+            else:
+                dollar_value_multiplier = 1000
 
         # Get primary doc detail
         filing_manager = self._get_bs4_text(primary_doc.find("filingManager").find("name"))
@@ -99,7 +115,7 @@ class FilingBase():
         signature_state = self._get_bs4_text(primary_doc.find("signatureBlock").find("stateOrCountry"))
         signature_date = self._get_bs4_text(primary_doc.find("signatureBlock").find("signatureDate"))
 
-        portfolio_value = int(self._get_bs4_text(primary_doc.find("summaryPage").find("tableValueTotal"))) * 1000
+        portfolio_value = int(self._get_bs4_text(primary_doc.find("summaryPage").find("tableValueTotal"))) * dollar_value_multiplier
         count_holdings = int(self._get_bs4_text(primary_doc.find("summaryPage").find("tableEntryTotal")))
 
         filing_cover_page = {
@@ -124,7 +140,7 @@ class FilingBase():
             name_of_issuer = self._get_bs4_text(each_holding.find("nameOfIssuer"))
             title_of_class = self._get_bs4_text(each_holding.find("titleOfClass"))
             cusip = self._get_bs4_text(each_holding.find("cusip"))
-            holding_value = int(each_holding.find("value").text) * 1000
+            holding_value = int(each_holding.find("value").text) * dollar_value_multiplier
             share_or_principal_amount = self._get_bs4_text(each_holding.find("shrsOrPrnAmt").find("sshPrnamtType"))
             share_or_principal_amount_count = int(each_holding.find("shrsOrPrnAmt").find("sshPrnamt").text)
             # put_or_call = each_holding.find("SOMETHING").text
@@ -166,7 +182,7 @@ class FilingBase():
 
         latest_url_date = self._last_100_13f_filings_url[0]
 
-        latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0])
+        latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0], latest_url_date[1])
 
         qtr_year_str = self._recent_qtr_year(latest_url_date[1])
         self.filings.update({
@@ -239,7 +255,7 @@ class FilingBase():
         if filing_url_date == None:
             raise Exception("No filing could be found for the period {}".format(qtr_year))
 
-        cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0])
+        cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0], filing_url_date[1])
         
         self.filings.update({
                         qtr_year:{
