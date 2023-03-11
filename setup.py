@@ -42,9 +42,13 @@ setuptools.setup(
     platforms=['any'],
     keywords='pandas, sec, securities exchange commission, finance, pandas datareader',
     # packages=find_packages(exclude=['contrib', 'docs', 'tests', 'examples']),
-    install_requires=['beautifulsoup4==4.11.1', 
-                        'pandas==1.3.5', 
-                        'requests==2.27.1'],
+    install_requires=['beautifulsoup4>=4.11.1', 
+                        'pandas>=1.3.5', 
+                        'requests>=2.27.1',
+                        'lxml>=4.8.0',
+                        'openpyxl>=3.0.9',
+                        ],
+
     packages=["finsec"]
     # entry_points={
     #     'console_scripts': [

@@ -35,7 +35,7 @@ import finsec
 filing = finsec.Filing('0001067983')
 
 # Return the latest 13F reported holdings for Berkshire Hathaway.
-filing.latest_13f_filing
+print(filing.latest_13f_filing)
 ```
 **Output:**
 |    | Name of issuer          | Title of class   | CUSIP     | Share or principal type   |   Holding value |   Share or principal amount count |
@@ -48,7 +48,7 @@ filing.latest_13f_filing
 
 ```python
 # Return the latest detailed 13F reported holdings for Berkshire Hathaway.
-filing.latest_13f_filing_detailed
+print(filing.latest_13f_filing_detailed)
 ```
 **Output:**
 |    | Name of issuer          | Title of class   | CUSIP     |   Holding value | Share or principal type   |   Share or principal amount count | Put or call   | Investment discretion   | Other manager   |   Voting authority sole count |   Voting authority shared count |   Voting authority none count |
@@ -64,8 +64,11 @@ filing.latest_13f_filing_cover_page
 #Output
 {'filing_manager': 'Berkshire Hathaway Inc', 'business_address': '3555 Farnam Street, Omaha, NE, 68131', 'submission_type': '13F-HR', 'period_of_report': '09-30-2022', 'signature_name': 'Marc D. Hamburg', 'signature_title': 'Senior Vice President', 'signature_phone': '402-346-1400', 'signature_city': 'Omaha', 'signature_state': 'NE', 'signature_date': '11-14-2022', 'portfolio_value': 296096640000, 'count_holdings': 179}
 
-# Return a specific 13F filing for the specified cik.
-filing.get_a_13f_filing("Q2-2022")
+# Return the attributes of a specific 13F filing for the specified cik. In the below example we are looking to grab the cover page, full holdings table and simplified holdings table for Berkshire for Q2-2022 (Calendar Year). 
+q2_cover_page, q2_holdings_table, q2_simplified_holdings_table = filing.get_a_13f_filing("Q2-2022")
+print(q2_cover_page)
+print(q2_holdings_table)
+print(q2_simplified_holdings_table)
 
 # Return the json object containing all 13F filings that are stored as part of the filing object (note this includes everything we've searched for so far).
 filing.filings

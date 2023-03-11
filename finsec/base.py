@@ -229,6 +229,9 @@ class FilingBase():
             quarter_dict = {1:4, 2:1, 3:2, 4:3} # Every statement released is for the previous quarter.
             release_qtr = quarter_dict[(datetime_obj.month - 1)//3 + 1]
             year = datetime_obj.year
+            if release_qtr == 4:    # Anything released in the previous quarter will have a year of last year (e.g. report is for 31st Dec 2022, yet report was released on the 1st Feb 2023)
+                year = year - 1 
+
             if "Q{}-{}".format(release_qtr, year) == qtr_year:
                 filing_url_date = filing
                 if index == 0:
@@ -237,6 +240,7 @@ class FilingBase():
             raise Exception("No filing could be found for the period {}".format(qtr_year))
 
         cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0])
+        
         self.filings.update({
                         qtr_year:{
                             "Cover Page":cover_page, 
