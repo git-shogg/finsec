@@ -8,7 +8,7 @@
 
 #### <ins>**IMPORTANT LEGAL DISCLAIMER**</ins>
 -----
-**finsec** is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs, and is intended for research and educational purposes.
+**finsec** is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs, and is intended for research and educational purposes. **finsec** should not be used for making decisions of a financial nature. 
 
 **You should refer to SEC Edgar's website for more details ([here](https://www.sec.gov/os/accessing-edgar-data))**
 
