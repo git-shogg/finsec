@@ -32,7 +32,7 @@ Check out these blog posts for detailed tutorials with code examples:
 
 ```python
 import finsec
-filing = finsec.Filing('0001067983')
+filing = finsec.Filing('0001067983')    # Optional declared user variable can be input here (e.g. declared_user="Joe Blog Joe.Blog@gmail.com")
 
 # Return the latest 13F reported holdings for Berkshire Hathaway.
 print(filing.latest_13f_filing)

@@ -14,8 +14,9 @@ _REQ_HEADERS_ = {
                 }
 
 class FilingBase():
-    def __init__(self, cik):
-        
+    def __init__(self, cik, declared_user=None):
+        if declared_user is not None:
+            _REQ_HEADERS_["User-Agent"] = declared_user+";"+_REQ_HEADERS_["User-Agent"]
         self.cik = self._validate_cik(cik)
         self.manager = None
         self._last_100_13f_filings_url = None
