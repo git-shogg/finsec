@@ -13,7 +13,7 @@ class Filing(FilingBase):
 
     @property
     def latest_13f_filing(self):
-        return self.get_latest_13f_filing()
+        return self.get_latest_13f_filing(ignore_amendments=False)
     
     @property
     def latest_13f_portfolio_value(self):
@@ -25,7 +25,7 @@ class Filing(FilingBase):
 
     @property
     def latest_13f_filing_detailed(self):
-        return self.get_latest_13f_filing(simplified=False)
+        return self.get_latest_13f_filing(simplified=False,ignore_amendments=False)
 
     @property
     def latest_13f_filing_cover_page(self):

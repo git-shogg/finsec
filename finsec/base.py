@@ -44,19 +44,23 @@ class FilingBase():
                 format_col = th
             elif "Filing Date" in headers.text:
                 filing_date_col = th
+            elif "Filings" in headers.text:
+                filing_type_col = th
             th += 1
         
         url_endings = []
         filing_dates = []
+        filing_types = []
 
         for row in results_table.find_all('tr'):
             tds = row.find_all('td')
             try:
                 url_endings.append(tds[format_col].find('a')['href'])
                 filing_dates.append(tds[filing_date_col].text)
+                filing_types.append(tds[filing_type_col].text)
             except:
                 pass
-        self._last_100_13f_filings_url = list(zip(url_endings, filing_dates))
+        self._last_100_13f_filings_url = list(zip(url_endings, filing_dates, filing_types))
         
         return self._last_100_13f_filings_url
     
@@ -177,11 +181,14 @@ class FilingBase():
                     pd.read_json(self.filings[qtr_year][table_type]).to_excel(writer,sheet_name="{}_holdings".format(qtr_year))
         return        
 
-    def get_latest_13f_filing(self, simplified=True):
+    def get_latest_13f_filing(self, simplified=True, ignore_amendments=False):
         """Returns the latest 13F-HR filing."""
         self._get_last_100_13f_filings_url()
 
-        latest_url_date = self._last_100_13f_filings_url[0]
+        if ignore_amendments == True:
+            latest_url_date = [(url, date,filing_type) for (url, date,filing_type) in self._last_100_13f_filings_url if filing_type != "13F-HR/A"][0]
+        else:
+            latest_url_date = self._last_100_13f_filings_url[0]
 
         latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0], latest_url_date[1])
 
