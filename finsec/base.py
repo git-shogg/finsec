@@ -37,31 +37,30 @@ class FilingBase():
         webpage = requests.get(_13F_SEARCH_URL_.format(self.cik),headers=_REQ_HEADERS_)
         soup = bs(webpage.text,"html.parser")
         results_table = soup.find(lambda table: table.has_attr('summary') and table['summary']=="Results")
-        
-        th = 0
-        for headers in results_table.find_all('th'):
-            if "Format" in headers.text:
-                format_col = th
-            elif "Filing Date" in headers.text:
-                filing_date_col = th
-            elif "Filings" in headers.text:
-                filing_type_col = th
-            th += 1
+        results_table_df = pd.read_html(results_table.prettify())[0]
+        # th = 0
+        # for headers in results_table.find_all('th'):
+        #     if "Format" in headers.text:
+        #         format_col = th
+        #     elif "Filing Date" in headers.text:
+        #         filing_date_col = th
+        #     elif "Filings" in headers.text:
+        #         filing_type_col = th
+        #     th += 1
         
         url_endings = []
-        filing_dates = []
-        filing_types = []
-
+        # filing_dates = []
+        # filing_types = []
+        url_link_col = results_table_df.columns.get_loc("Format")
         for row in results_table.find_all('tr'):
             tds = row.find_all('td')
             try:
-                url_endings.append(tds[format_col].find('a')['href'])
-                filing_dates.append(tds[filing_date_col].text)
-                filing_types.append(tds[filing_type_col].text)
+                url_endings.append(tds[url_link_col].find('a')['href'])
             except:
                 pass
-        self._last_100_13f_filings_url = list(zip(url_endings, filing_dates, filing_types))
-        
+        results_table_df['url'] = url_endings
+        # self._last_100_13f_filings_url = list(zip(url_endings, filing_dates, filing_types))
+        self._last_100_13f_filings_url = results_table_df
         return self._last_100_13f_filings_url
     
     def _get_bs4_text(self, bs4_obj):
@@ -77,7 +76,7 @@ class FilingBase():
         year = datetime_obj.year
         return "Q{}-{}".format(release_qtr, year)
 
-    def _parse_13f_url(self, url, date):
+    def _parse_13f_url(self, url:str, date):
         response = requests.get(_BASE_URL_+url, headers=_REQ_HEADERS_)
         soup = bs(response.text, "html.parser")
         import re
@@ -185,14 +184,14 @@ class FilingBase():
         """Returns the latest 13F-HR filing."""
         self._get_last_100_13f_filings_url()
 
-        if ignore_amendments == True:
-            latest_url_date = [(url, date,filing_type) for (url, date,filing_type) in self._last_100_13f_filings_url if filing_type != "13F-HR/A"][0]
-        else:
-            latest_url_date = self._last_100_13f_filings_url[0]
+        # if ignore_amendments == True:
+        #     latest_url_date = [(url, date,filing_type) for (url, date,filing_type) in self._last_100_13f_filings_url if filing_type != "13F-HR/A"][0]
+        # else:
+        #     latest_url_date = self._last_100_13f_filings_url[0]
 
-        latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(latest_url_date[0], latest_url_date[1])
+        latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(self._last_100_13f_filings_url['url'][0],self._last_100_13f_filings_url['Filing Date'][0])
 
-        qtr_year_str = self._recent_qtr_year(latest_url_date[1])
+        qtr_year_str = self._recent_qtr_year(self._last_100_13f_filings_url['Filing Date'][0])
         self.filings.update({
                         qtr_year_str:{
                             "Cover Page":latest_13f_cover_page, 
@@ -248,8 +247,8 @@ class FilingBase():
                 return self.filings[qtr_year]["Cover Page"], pd.read_json(self.filings[qtr_year]["Holdings Table"]), pd.read_json(self.filings[qtr_year]["Simplified Holdings Table"])
         filing_url_date = None
         latest_13_f_filing = False
-        for index, filing in enumerate(self._last_100_13f_filings_url):
-            datetime_obj = datetime.strptime(filing[1], '%Y-%m-%d')
+        for index, row in self._last_100_13f_filings_url.iterrows():
+            datetime_obj = datetime.strptime(row['Filing Date'], '%Y-%m-%d')
             quarter_dict = {1:4, 2:1, 3:2, 4:3} # Every statement released is for the previous quarter.
             release_qtr = quarter_dict[(datetime_obj.month - 1)//3 + 1]
             year = datetime_obj.year
@@ -257,13 +256,16 @@ class FilingBase():
                 year = year - 1 
 
             if "Q{}-{}".format(release_qtr, year) == qtr_year:
-                filing_url_date = filing
+                filing_url_date = row['Filing Date']
+                filing_url = row['url']
                 if index == 0:
                     latest_13_f_filing = True
+        
+        
         if filing_url_date == None:
             raise Exception("No filing could be found for the period {}".format(qtr_year))
 
-        cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url_date[0], filing_url_date[1])
+        cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url, filing_url_date)
         
         self.filings.update({
                         qtr_year:{
