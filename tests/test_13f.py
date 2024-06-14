@@ -10,7 +10,7 @@ import finsec
 class Test:
     def setup_class(self):
         self.cik = "0001067983"
-        self.filing = finsec.Filing(self.cik, declared_user="git-shogg")
+        self.filing = finsec.Filing(self.cik)
 
     def test_cik(self):
         assert self.filing.cik == self.cik
