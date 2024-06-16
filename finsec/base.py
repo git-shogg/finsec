@@ -33,7 +33,7 @@ class FilingBase():
 
     def _get_last_100_13f_filings_url(self):
         """Searches the last 13F-HR and 13F-HR/A filings. Returns a 13f_filings variable and 13f_amendment_filings variable"""
-        if self._13f_filings or self._13f_amendment_filings:
+        if self._13f_filings is not None or self._13f_amendment_filings is not None:
             return
 
         webpage = requests.get(_13F_SEARCH_URL_.format(self.cik),headers=_REQ_HEADERS_)
@@ -197,26 +197,31 @@ class FilingBase():
     def _apply_amendments(self, qtr_year_str:str, original_cover_page:dict, original_holdings_table:pd.DataFrame, original_simplified_holdings_table: pd.DataFrame):
         self._13f_amendment_filings_period_of_filings()
         select_amendment_filings = self._13f_amendment_filings[self._13f_amendment_filings['Period of Report Quarter Year'] == qtr_year_str].iloc[::-1]    # Check for matching amendments and reverse the order of the list so amendments can be made chronologically. 
+        
+        # Start by setting the output variables, this ensures that if no amendment filings are found, these can be returned as is, unaltered.
+        output_cover_page = original_cover_page    # Set as original cover page to begin with
+        output_holdings_table = original_holdings_table
+        output_simplified_holdings_table = original_simplified_holdings_table
+        
         if len(select_amendment_filings) > 0:
             for index, row in select_amendment_filings.iterrows():
                 a_cover_page, a_holdings_table, a_simplified_holdings_table = self._parse_13f_url(row['url'], row['Filing Date'])
-                amended_cover_page = original_cover_page    # Set as original cover page to begin with
                 if a_cover_page["amendment_type"] == "NEW HOLDINGS":
 
-                    amended_cover_page['portfolio_value'] = original_cover_page['portfolio_value'] + a_cover_page['portfolio_value']
-                    amended_cover_page['count_holdings'] = original_cover_page['count_holdings'] + a_cover_page['count_holdings']
+                    output_cover_page['portfolio_value'] = original_cover_page['portfolio_value'] + a_cover_page['portfolio_value']
+                    output_cover_page['count_holdings'] = original_cover_page['count_holdings'] + a_cover_page['count_holdings']
 
                     # original_holdings_table = original_holdings_table.append(a_holdings_table, ignore_index=True)
-                    amended_holdings_table = pd.concat([original_holdings_table,a_holdings_table],ignore_index=True)
+                    output_holdings_table = pd.concat([original_holdings_table,a_holdings_table],ignore_index=True)
                     # original_simplified_holdings_table = original_simplified_holdings_table.append(a_simplified_holdings_table, ignore_index=True)
-                    amended_simplified_holdings_table = pd.concat([original_simplified_holdings_table,a_simplified_holdings_table], ignore_index=True)
-                    amended_cover_page['filing_amended'] = True
+                    output_simplified_holdings_table = pd.concat([original_simplified_holdings_table,a_simplified_holdings_table], ignore_index=True)
+                    output_cover_page['filing_amended'] = True
                 else:   # If it is a not a "New Holdings" filing type, simply overwrite the entirety of the previous filing. 
-                    amended_cover_page = a_cover_page
-                    amended_holdings_table = a_holdings_table
-                    amended_simplified_holdings_table = a_simplified_holdings_table
-                    amended_cover_page['filing_amended'] = True
-        return amended_cover_page, amended_holdings_table, amended_simplified_holdings_table
+                    output_cover_page = a_cover_page
+                    output_holdings_table = a_holdings_table
+                    output_simplified_holdings_table = a_simplified_holdings_table
+                    output_cover_page['filing_amended'] = True
+        return output_cover_page, output_holdings_table, output_simplified_holdings_table
 
     def convert_filings_to_excel(self, simplified:bool = True, inc_cover_page_tabs:bool = False):
         """Outputs existing 'self.filings' dictionary to excel. Note that this will overwrite any existing files that may be present."""

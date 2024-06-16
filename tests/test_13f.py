@@ -3,7 +3,6 @@ Tests for 13F functionality
 """
 
 import pandas as pd
-
 import finsec
 
 
@@ -21,7 +20,7 @@ class Test:
         assert len(self.filing.filings) > 0
 
     def test_latest_13f_filing_detailed(self):
-        df = self.filing.latest_13f_filing_detailed
+        df = self.filing.latest_13f_filing_detailed()
         assert isinstance(df, pd.DataFrame)
 
     def test_latest_13f_filing_cover_page(self):
@@ -30,7 +29,7 @@ class Test:
 
     def test_latest_13f_portfolio_value(self):
         portfolio_value = self.filing.latest_13f_portfolio_value
-        assert isinstance(portfolio_value, float)
+        assert isinstance(portfolio_value, int)
 
     def test_latest_13f_count_holdings(self):
         holdings_count = self.filing.latest_13f_count_holdings

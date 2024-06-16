@@ -22,9 +22,8 @@ class Filing(FilingBase):
     def latest_13f_count_holdings(self):
         return self.get_latest_13f_num_holdings()
 
-    @property
     def latest_13f_filing_detailed(self):
-        return self.get_latest_13f_filing(simplified=False, amend_filing=False)
+        return self.get_latest_13f_filing(simplified=False, amend_filing=True)
 
     @property
     def latest_13f_filing_cover_page(self):
