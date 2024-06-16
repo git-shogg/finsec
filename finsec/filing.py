@@ -3,16 +3,15 @@ from bs4 import BeautifulSoup as bs
 
 from .base import FilingBase
 
-
 class Filing(FilingBase):
 
-    def get_a_13f_filing(self, qtr_year, amend_filing=True):
+    def get_a_13f_filing(self, qtr_year:str, amend_filing:bool = True):
         return self.get_13f_filing(qtr_year, amend_filing)
 
-    def filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+    def filings_to_excel(self, simplified:bool = True, inc_cover_page_tabs:bool = False):
         return self.convert_filings_to_excel(simplified, inc_cover_page_tabs)
 
-    def latest_13f_filing(self, simplified=True, amend_filing=True):
+    def latest_13f_filing(self, simplified:bool = True, amend_filing:bool = True):
         return self.get_latest_13f_filing(simplified, amend_filing)
 
     @property

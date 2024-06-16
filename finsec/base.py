@@ -25,7 +25,7 @@ class FilingBase():
         
         self.filings = {}
 
-    def _validate_cik(self, cik):
+    def _validate_cik(self, cik:str):
         """Check if CIK is 10 digit string."""
         if not (isinstance(cik, str) and len(cik) == 10 and cik.isdigit()):
             raise Exception("""Invalid CIK Provided""")
@@ -77,7 +77,7 @@ class FilingBase():
         except:
             return "N/A"
 
-    def _recent_qtr_year(self, datetime_o):
+    def _recent_qtr_year(self, datetime_o:str):
         """Function estimates 'period of report' in a Quarter Year format (calendar year) based upon filing date."""
         datetime_obj = datetime.strptime(datetime_o, '%Y-%m-%d')
         quarter_dict = {1:4, 2:1, 3:2, 4:3} # Every statement released is for the previous quarter.
@@ -96,7 +96,7 @@ class FilingBase():
         year = datetime_obj.year
         return "Q{}-{}".format(release_qtr, year)
 
-    def _parse_13f_url(self, url:str, date):
+    def _parse_13f_url(self, url:str, date:str):
         response = requests.get(_BASE_URL_+url, headers=_REQ_HEADERS_)
         soup = bs(response.text, "html.parser")
         import re
@@ -196,23 +196,29 @@ class FilingBase():
 
     def _apply_amendments(self, qtr_year_str:str, original_cover_page:dict, original_holdings_table:pd.DataFrame, original_simplified_holdings_table: pd.DataFrame):
         self._13f_amendment_filings_period_of_filings()
-        select_amendment_filings = self._13f_amendment_filings[self._13f_amendment_filings['Period of Report Quarter Year'] == qtr_year_str]    # Check for matching amendments and reverse the order of the list so amendments can be made chronologically. 
+        select_amendment_filings = self._13f_amendment_filings[self._13f_amendment_filings['Period of Report Quarter Year'] == qtr_year_str].iloc[::-1]    # Check for matching amendments and reverse the order of the list so amendments can be made chronologically. 
         if len(select_amendment_filings) > 0:
             for index, row in select_amendment_filings.iterrows():
                 a_cover_page, a_holdings_table, a_simplified_holdings_table = self._parse_13f_url(row['url'], row['Filing Date'])
+                amended_cover_page = original_cover_page    # Set as original cover page to begin with
                 if a_cover_page["amendment_type"] == "NEW HOLDINGS":
-                    original_cover_page['portfolio_value'] = original_cover_page['portfolio_value'] + a_cover_page['portfolio_value']
-                    original_cover_page['count_holdings'] = original_cover_page['count_holdings'] + a_cover_page['count_holdings']
-                    original_holdings_table = original_holdings_table.append(a_holdings_table, ignore_index=True)
-                    original_simplified_holdings_table = original_simplified_holdings_table.append(a_simplified_holdings_table, ignore_index=True)
-                    original_cover_page['filing_amended'] = True
-                else:   # If it is a not a "New Holdings" filing type, simply overwrite the entirety of the previous filing. 
-                    original_cover_page = a_cover_page
-                    original_holdings_table = a_holdings_table
-                    original_simplified_holdings_table = a_simplified_holdings_table
-                    original_cover_page['filing_amended'] = True
 
-    def convert_filings_to_excel(self, simplified=True, inc_cover_page_tabs=False):
+                    amended_cover_page['portfolio_value'] = original_cover_page['portfolio_value'] + a_cover_page['portfolio_value']
+                    amended_cover_page['count_holdings'] = original_cover_page['count_holdings'] + a_cover_page['count_holdings']
+
+                    # original_holdings_table = original_holdings_table.append(a_holdings_table, ignore_index=True)
+                    amended_holdings_table = pd.concat([original_holdings_table,a_holdings_table],ignore_index=True)
+                    # original_simplified_holdings_table = original_simplified_holdings_table.append(a_simplified_holdings_table, ignore_index=True)
+                    amended_simplified_holdings_table = pd.concat([original_simplified_holdings_table,a_simplified_holdings_table], ignore_index=True)
+                    amended_cover_page['filing_amended'] = True
+                else:   # If it is a not a "New Holdings" filing type, simply overwrite the entirety of the previous filing. 
+                    amended_cover_page = a_cover_page
+                    amended_holdings_table = a_holdings_table
+                    amended_simplified_holdings_table = a_simplified_holdings_table
+                    amended_cover_page['filing_amended'] = True
+        return amended_cover_page, amended_holdings_table, amended_simplified_holdings_table
+
+    def convert_filings_to_excel(self, simplified:bool = True, inc_cover_page_tabs:bool = False):
         """Outputs existing 'self.filings' dictionary to excel. Note that this will overwrite any existing files that may be present."""
         table_type = "Simplified Holdings Table" if simplified == True else "Holdings Table"
         if len(self.filings)>0:
@@ -225,7 +231,7 @@ class FilingBase():
                     pd.read_json(self.filings[qtr_year][table_type]).to_excel(writer,sheet_name="{}_holdings".format(qtr_year))
         return        
 
-    def get_latest_13f_filing(self, simplified=True, amend_filing=True):
+    def get_latest_13f_filing(self, simplified:bool = True, amend_filing:bool = True):
         """Returns the latest 13F-HR filing."""
         self._get_last_100_13f_filings_url()
         # Grab latest 13F-HR filing, do not grab amendment filings ("13F-HR/A")
@@ -236,7 +242,7 @@ class FilingBase():
         
         qtr_year_str = self._recent_qtr_year(self._13f_filings['Filing Date'][0])
         if amend_filing:
-            self._apply_amendments(qtr_year_str, latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table)
+            latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._apply_amendments(qtr_year_str, latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table)
 
         self.filings.update({
                         qtr_year_str:{
@@ -276,7 +282,7 @@ class FilingBase():
             latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
             return self.filings[latest_qtr_year[0]]['Fund Value']
 
-    def get_latest_13f_num_holdings(self, holdings_type='Simplified Holdings Count'):
+    def get_latest_13f_num_holdings(self, holdings_type:str = 'Simplified Holdings Count'):
         """Returns the latest 13F-HR number of holdings"""
         latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
         if len(latest_qtr_year) >0:
@@ -286,7 +292,7 @@ class FilingBase():
             latest_qtr_year = [x for x in self.filings.keys() if self.filings[x]['Latest 13F']]
             return self.filings[latest_qtr_year[0]][holdings_type]
 
-    def get_13f_filing(self, cal_qtr_year: str, amend_filing: bool=True):
+    def get_13f_filing(self, cal_qtr_year:str, amend_filing:bool=True):
         """Returns the requested 13F-HR filing."""
         self._get_last_100_13f_filings_url()
         if len(self.filings) != 0:
@@ -316,7 +322,7 @@ class FilingBase():
         
         qtr_year_str = self._recent_qtr_year(filing_url_date)
         if amend_filing:
-            self._apply_amendments(qtr_year_str, cover_page, holdings_table, simplified_holdings_table)
+            cover_page, holdings_table, simplified_holdings_table = self._apply_amendments(qtr_year_str, cover_page, holdings_table, simplified_holdings_table)
         
         self.filings.update({
                         cal_qtr_year:{
