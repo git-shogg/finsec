@@ -4,15 +4,9 @@
 
 ![finsec_logo](assets/finsec_logo.png)
 
-<table border=1 cellpadding=10><tr><td>
-
-#### <ins>**IMPORTANT LEGAL DISCLAIMER**</ins>
------
-**finsec** is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs. This tool is intended for research and informational purposes only. It should not be used for making financial decisions. Always consult with a qualified financial advisor for investment guidance. 
-
+> [!IMPORTANT]  
+> **finsec** is **not** affiliated, endorsed, or vetted by the United. States. Securities Exchange Commission. It's an open-source tool that uses the SEC's publicly available APIs. This tool is intended for research and informational purposes only. It should not be used for making financial decisions. Always consult with a qualified financial advisor for investment guidance.
 **You should refer to SEC Edgar's website for more details ([here](https://www.sec.gov/os/accessing-edgar-data))**
-
-</td></tr></table>
 
 <a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/badge/python-3.7+-blue.svg?style=flat" alt="Python version"></a>
 <a target="new" href="https://pypi.python.org/pypi/finsec"><img border=0 src="https://img.shields.io/pypi/v/finsec.svg?maxAge=60%" alt="PyPi version"></a>
@@ -21,11 +15,10 @@
 <a target="new" href="https://github.com/git-shogg/finsec"><img border=0 src="https://img.shields.io/github/stars/git-shogg/finsec.svg?style=social&label=Star&maxAge=60" alt="Star this repo"></a>
 <!-- <a target="new" href="https://github.com/git-shogg/finsec/actions/workflows/ci/badge.svg"><img border=0 src="https://img.shields.io/badge/git-shogg/finsec/main.svg?maxAge=1" alt="Build status"></a> -->
 [![Python package](https://github.com/git-shogg/finsec/actions/workflows/ci.yml/badge.svg)](https://github.com/git-shogg/finsec/actions/workflows/ci.yml)
-<!-- ## Blogs
-Check out these blog posts for detailed tutorials with code examples:
-</br >- [Medium 1]().</br >
-</br >- [Medium 2]().</br >
-</br >- [Medium 3]().</br > -->
+
+## Blogs
+Check out the following blog post for a detailed tutorial on how `finsec` has been used to aid with analysing the performance of some of the world's most prestigious hedge funds:
+</br >[Unravelling investment fund manager strategies through 13f SEC filings](https://medium.com/@stephen.hogg.sh/unravelling-investment-fund-manager-strategies-through-13f-sec-filings-38dc030cf4c6).</br>
 
 ## Quickstart
 ### Review 13F filings for Berkshire Hathaway CIK **0001067983**
