@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 
 from .base import FilingBase
 
+
 class Filing(FilingBase):
 
     def get_a_13f_filing(self, qtr_year, amend_filing=True):
@@ -13,7 +14,7 @@ class Filing(FilingBase):
 
     def latest_13f_filing(self, simplified=True, amend_filing=True):
         return self.get_latest_13f_filing(simplified, amend_filing)
-    
+
     @property
     def latest_13f_portfolio_value(self):
         return self.get_latest_13f_value()
@@ -24,11 +25,8 @@ class Filing(FilingBase):
 
     @property
     def latest_13f_filing_detailed(self):
-        return self.get_latest_13f_filing(simplified=False,ignore_amendments=False)
+        return self.get_latest_13f_filing(simplified=False, amend_filing=False)
 
     @property
     def latest_13f_filing_cover_page(self):
         return self.get_latest_13f_filing_cover_page()
-    
-    
-    
