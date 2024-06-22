@@ -5,6 +5,7 @@ import pandas as pd
 import pdb
 import os
 import time
+from io import StringIO
 
 _BASE_URL_ = 'https://www.sec.gov'
 _13F_SEARCH_URL_ = 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={}&type=13F-HR&count=100'
@@ -39,7 +40,7 @@ class FilingBase():
         webpage = requests.get(_13F_SEARCH_URL_.format(self.cik),headers=_REQ_HEADERS_)
         soup = bs(webpage.text,"html.parser")
         results_table = soup.find(lambda table: table.has_attr('summary') and table['summary']=="Results")
-        results_table_df = pd.read_html(results_table.prettify())[0]
+        results_table_df = pd.read_html(StringIO(str(results_table)))[0]
         
         url_endings = []
         url_link_col = results_table_df.columns.get_loc("Format")
@@ -246,7 +247,7 @@ class FilingBase():
         latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._parse_13f_url(url,filing_date)
         
         qtr_year_str = self._recent_qtr_year(self._13f_filings['Filing Date'][0])
-        if amend_filing:
+        if amend_filing and len(self._13f_amendment_filings) > 0:
             latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table = self._apply_amendments(qtr_year_str, latest_13f_cover_page, latest_holdings_table, latest_simplified_holdings_table)
 
         self.filings.update({
@@ -326,7 +327,7 @@ class FilingBase():
         cover_page, holdings_table, simplified_holdings_table = self._parse_13f_url(filing_url, filing_url_date)
         
         qtr_year_str = self._recent_qtr_year(filing_url_date)
-        if amend_filing:
+        if amend_filing and len(self._13f_amendment_filings)>0:
             cover_page, holdings_table, simplified_holdings_table = self._apply_amendments(qtr_year_str, cover_page, holdings_table, simplified_holdings_table)
         
         self.filings.update({
